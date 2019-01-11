@@ -35,12 +35,33 @@ int command_interpreter(int sd) {//命令解释器
 
 
 void display_time_and_date(){
+  INITCOLOR(READ_COLOR);
   printf("[%s]",__DATE__);
+  INITCOLOR(GREEN_COLOR);
   printf("[%s]  ",__TIME__ );
+  INITCOLOR(ZERO_COLOR);
 }
 
+void getting_started(){
+  CLEARSCREEN();
+  display_time_and_date();
+  printf("Getting started of Network sniffer\n\n");
+}
 
 int main() {
-  
+  int sd;
+  int res;
+  int saddr_size;
+  int date_size;
+  struct sockaddr* saddr;
+  unsigned char* buffer;
+  t_sniffer sniffer;
+  fd_set fd_read;
+  buffer = (unsigned char*)malloc(sizeof(unsigned char*) * 65536);
+  sniffer.logfile = fopen("log.txt", "w");
+  if(NULL == sniffer.logfile){
+    perror("fopen():");
+    return EXIT_FAILURE;
+  }
   return 0;
 }
