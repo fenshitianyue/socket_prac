@@ -1,8 +1,8 @@
-#include <signal.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <signal.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -48,6 +48,38 @@ void getting_started(){
   printf("Getting started of Network sniffer\n\n");
 }
 
+void ProcessPacket(unsigned char* buffer, int size, t_sniffer* sniffer){
+  buffer = buffer + 6 + 6 + 2;
+  struct iphdr* iph = (struct iphdr*)buffer;
+  ++sniffer->prot->total; //数据包+1
+  switch(iph->protocol){
+    case 1:
+      ++sniffer->prot->icmp;
+      print_icmp_packet(buffer, size, sniffer);
+      break;
+    case 2:
+      ++sniffer->prot->igmp;
+      break;
+    case 6:
+      ++sniffer->prot->tcp;
+      print_tcp_packet(buffer, size, sniffer);
+      break;
+    case 17:
+      ++sniffer->prot->udp;
+      print_udp_packet(buffer, size, sniffer);
+      break;
+    default:
+      ++sniffer->prot->others;
+      break;
+  }
+  display_time_and_date();
+  printf("TCP: %d UDP: %d ICMP: %d IGMP: %d Others: %d Total: %d\n",
+      sniffer->prot->tcp, sniffer->prot->udp,
+      sniffer->prot->icmp, sniffer->prot->igmp,
+      sniffer->prot->others, sniffer->prot->total);
+}
+
+
 int main() {
   int sd;
   int res;
@@ -62,6 +94,19 @@ int main() {
   if(NULL == sniffer.logfile){
     perror("fopen():");
     return EXIT_FAILURE;
+  }
+  fprintf(sniffer.logfile, "***LOGFILE(%s - %s)***\n", __DATE__, __TIME__);
+  sniffer.prot = (t_protocol*)malloc(sizeof(t_protocol*));
+  sd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP));
+  if(sd < 0){
+    perror("socket():");
+    return EXIT_FAILURE;
+  }
+  getting_started();
+  signal(SIGINT, &signal_white_now);
+  signal(SIGQUIT, &signal_white_now);
+  while(1){
+
   }
   return 0;
 }
